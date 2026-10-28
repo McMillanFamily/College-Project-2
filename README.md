@@ -63,6 +63,7 @@ Then open http://127.0.0.1:5000 in your browser.
 | Ross | Developer |
 | Daisy Wells | Documentation and Research Lead |
 | Cian | Software Tester |
+| Billy| Dont know yet lol|
 
 ## Documentation
 
