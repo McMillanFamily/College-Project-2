@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Notes{% endblock %}
+{% block content %}
+<h1>My notes</h1>
+
+{% if notes %}
+  <ul class="plain notes">
+  {% for n in notes %}
+    <li>
+      <p class="note-text">{{ n.text }}</p>
+      <p class="meta">{{ n.created }}</p>
+      <form method="post" action="{{ url_for('delete_note_route', note_id=n.id) }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <button class="small danger" aria-label="Delete note from {{ n.created }}">Delete</button>
+      </form>
+    </li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <p>No notes yet. Write your first one below.</p>
+{% endif %}
+
+<h2>Add a note</h2>
+<form method="post" action="{{ url_for('add_note_route') }}" class="form">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <label for="text">Note</label>
+  <textarea id="text" name="text" rows="4" maxlength="1000" required></textarea>
+  <button>Save note</button>
+</form>
+{% endblock %}

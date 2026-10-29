@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Help{% endblock %}
+{% block content %}
+<h1>Help</h1>
+
+<h2>Tasks</h2>
+<p>Add a task with a name, a deadline and a priority. Choose <strong>Mark done</strong> when you finish it. Sort the list by deadline or by priority using the links above the table.</p>
+
+<h2>Reminders</h2>
+<p>The home page lists unfinished work that is overdue, due today, or due within {{ SOON_DAYS }} days.</p>
+
+<h2>Timetable</h2>
+<p>Add lessons Monday to Friday. Two lessons on the same day cannot overlap.</p>
+
+<h2>Notes</h2>
+<p>Write short notes to keep useful information together. Newest notes appear first.</p>
+
+<h2>Your data</h2>
+<p>Everything is saved automatically on the server, so it is still here next time.</p>
+
+<h2>Feeling overwhelmed?</h2>
+<p>Start with your High priority tasks and do one at a time. If you are struggling, talk to your tutor or the college student support team.</p>
+{% endblock %}

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Home{% endblock %} | StudyPilot</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="top">
+    <div class="wrap bar">
+      <a class="brand" href="{{ url_for('home') }}">StudyPilot</a>
+      <nav aria-label="Main">
+        {% set here = request.endpoint %}
+        <a href="{{ url_for('home') }}" {% if here == 'home' %}aria-current="page"{% endif %}>Home</a>
+        <a href="{{ url_for('tasks') }}" {% if here == 'tasks' %}aria-current="page"{% endif %}>Tasks</a>
+        <a href="{{ url_for('timetable') }}" {% if here == 'timetable' %}aria-current="page"{% endif %}>Timetable</a>
+        <a href="{{ url_for('notes') }}" {% if here == 'notes' %}aria-current="page"{% endif %}>Notes</a>
+        <a href="{{ url_for('help_page') }}" {% if here == 'help_page' %}aria-current="page"{% endif %}>Help</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="messages" role="alert">
+          {% for category, text in messages %}
+            <p class="msg {{ category }}"><strong>{{ 'Problem:' if category == 'error' else 'Done:' }}</strong> {{ text }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="wrap foot">
+    StudyPilot is a student project. Please use made-up information only; do not enter personal details.
+  </footer>
+</body>
+</html>
