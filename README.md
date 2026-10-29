@@ -62,8 +62,9 @@ Then open http://127.0.0.1:5000 in your browser.
 | Ciaran Bell | Developer |
 | Ross | Developer |
 | Daisy Wells | Documentation and Research Lead |
+| Emma Dunn | Lead UI Designer |
 | Cian | Software Tester |
-| Billy| Dont know yet lol|
+| Billy| Software Tester |
 
 ## Documentation
 
