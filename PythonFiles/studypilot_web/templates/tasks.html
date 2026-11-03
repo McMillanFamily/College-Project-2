@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Tasks{% endblock %}
+{% block content %}
+<h1>My tasks</h1>
+
+<p class="sortbar">Sort by:
+  <a href="{{ url_for('tasks', sort='deadline') }}" {% if sort == 'deadline' %}aria-current="true"{% endif %}>Deadline</a>
+  <a href="{{ url_for('tasks', sort='priority') }}" {% if sort == 'priority' %}aria-current="true"{% endif %}>Priority</a>
+</p>
+
+{% if tasks %}
+<table class="stack">
+  <caption class="sr">Tasks sorted by {{ sort }}</caption>
+  <thead><tr><th scope="col">Task</th><th scope="col">Deadline</th><th scope="col">Priority</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+  <tbody>
+  {% for t in tasks %}
+    {% set st = status_of(t) %}
+    <tr class="p{{ t.priority }}{{ ' is-done' if t.done }}">
+      <td data-label="Task"><strong>{{ t.title }}</strong></td>
+      <td data-label="Deadline">{{ fmt_date(t.deadline) }}</td>
+      <td data-label="Priority">{{ PRIORITIES[t.priority] }}</td>
+      <td data-label="Status"><span class="chip {{ st }}">{{ STATUS_TEXT[st] }}</span></td>
+      <td data-label="Actions" class="row-actions">
+        {% if not t.done %}
+        <form method="post" action="{{ url_for('complete_task_route', task_id=t.id) }}">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <button class="small" aria-label="Mark {{ t.title }} as done">Mark done</button>
+        </form>
+        {% endif %}
+        <form method="post" action="{{ url_for('delete_task_route', task_id=t.id) }}">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <button class="small danger" aria-label="Delete {{ t.title }}">Delete</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+  <p>No tasks yet. Use the form below to add your first one.</p>
+{% endif %}
+
+<h2>Add a task</h2>
+<form method="post" action="{{ url_for('add_task_route') }}" class="form">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <label for="title">Task name</label>
+  <input id="title" name="title" maxlength="80" required>
+
+  <label for="deadline">Deadline</label>
+  <input id="deadline" name="deadline" type="date" min="{{ today_iso }}" required>
+
+  <fieldset>
+    <legend>Priority</legend>
+    {% for value, label in PRIORITIES.items() %}
+      <label class="radio"><input type="radio" name="priority" value="{{ value }}" {% if value == 2 %}checked{% endif %}> {{ label }}</label>
+    {% endfor %}
+  </fieldset>
+  <button>Save task</button>
+</form>
+{% endblock %}
