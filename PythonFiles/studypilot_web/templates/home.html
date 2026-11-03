@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<h1>Welcome back</h1>
+
+<section aria-labelledby="progress-h" class="progress-block">
+  <h2 id="progress-h">Your progress</h2>
+  <p class="big">{{ percent }}%</p>
+  <div class="track" role="progressbar" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100"
+       aria-label="Tasks completed"><div class="fill" style="width: {{ percent }}%"></div></div>
+  <p>{{ done }} of {{ total }} task{{ '' if total == 1 else 's' }} done.</p>
+</section>
+
+<section aria-labelledby="remind-h">
+  <h2 id="remind-h">What needs your attention</h2>
+  {% if not (groups.overdue or groups.today or groups.soon) %}
+    <p>Nothing urgent. <a href="{{ url_for('tasks') }}">Add a task</a> to start planning.</p>
+  {% endif %}
+  {% for key, title in [('overdue', 'Overdue'), ('today', 'Due today'), ('soon', 'Due within ' ~ SOON_DAYS ~ ' days')] %}
+    {% if groups[key] %}
+      <h3 class="group {{ key }}">{{ title }}</h3>
+      <ul class="plain">
+        {% for t in groups[key] %}
+          <li><strong>{{ t.title }}</strong> <span class="meta">{{ fmt_date(t.deadline) }}, {{ PRIORITIES[t.priority] }} priority</span></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endfor %}
+</section>
+
+<p class="actions">
+  <a class="button" href="{{ url_for('tasks') }}">Add a task</a>
+  <a class="button secondary" href="{{ url_for('timetable') }}">View timetable</a>
+</p>
+{% endblock %}

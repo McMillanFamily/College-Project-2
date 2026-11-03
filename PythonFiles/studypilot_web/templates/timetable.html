@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Timetable{% endblock %}
+{% block content %}
+<h1>My timetable</h1>
+
+{% for day, lessons in week %}
+  <h2 class="day">{{ day }}</h2>
+  {% if lessons %}
+    <ul class="plain lessons">
+    {% for l in lessons %}
+      <li>
+        <span class="time">{{ l.start }} to {{ l.end }}</span>
+        <span><strong>{{ l.name }}</strong>, room {{ l.room }}</span>
+        <form method="post" action="{{ url_for('delete_lesson_route', lesson_id=l.id) }}">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <button class="small danger" aria-label="Delete {{ l.name }} on {{ day }}">Delete</button>
+        </form>
+      </li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    <p class="meta">No lessons.</p>
+  {% endif %}
+{% endfor %}
+
+<h2>Add a lesson</h2>
+<form method="post" action="{{ url_for('add_lesson_route') }}" class="form">
+  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+  <label for="day">Day</label>
+  <select id="day" name="day">{% for d in DAYS %}<option>{{ d }}</option>{% endfor %}</select>
+  <label for="start">Start time</label>
+  <input id="start" name="start" type="time" required>
+  <label for="end">End time</label>
+  <input id="end" name="end" type="time" required>
+  <label for="name">Lesson name</label>
+  <input id="name" name="name" maxlength="60" required>
+  <label for="room">Room (optional)</label>
+  <input id="room" name="room" maxlength="20">
+  <button>Add lesson</button>
+</form>
+{% endblock %}
