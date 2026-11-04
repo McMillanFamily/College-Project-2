@@ -1,0 +1,48 @@
+name: Auto-Resolve Merge Conflicts
+on:
+  workflow_dispatch: # Allows you to run this manually
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Check out the repository with full history
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # 2. Configure Git Bot
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # 3. Attempt to merge an incoming branch (e.g., merging 'develop' into current branch)
+      # The "|| true" ensures the workflow doesn't crash immediately when conflicts happen
+      - name: Merge incoming branch
+        run: |
+          git fetch origin develop
+          git merge origin/develop --no-commit --no-ff || true
+
+      # 4. Run the Conflict Resolver Action
+      - name: Resolve conflicts
+        id: resolve
+        uses: VeyronSakai/conflict-resolver@v0.5.2
+
+      # 5. Handle the results
+      - name: Handle resolution results
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UNRESOLVED_FILES: ${{ steps.resolve.outputs.unresolved-files }}
+        run: |
+          if [ -z "$UNRESOLVED_FILES" ]; then
+            echo "✅ All conflicts successfully resolved!"
+            git add .
+            git commit -m "chore: auto-resolve merge conflicts"
+            git push
+          else
+            echo "❌ Error: Unable to automatically resolve all conflicts."
+            echo "Remaining conflicted files: $UNRESOLVED_FILES"
+            exit 1
+          fi

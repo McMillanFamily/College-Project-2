@@ -1,0 +1,18 @@
+# .github/conflict-resolver.yml
+rules:
+  # Always accept incoming changes for lockfiles
+  - paths: 'package-lock.json'
+    strategy: 'theirs'
+  - paths: 'yarn.lock'
+    strategy: 'theirs'
+
+  # Always keep our version for auto-generated files or build outputs
+  - paths: '*.generated.ts'
+    strategy: 'ours'
+  - paths: 'dist/**/*'
+    strategy: 'ours'
+
+  # Optional: Filter by specific conflict types (e.g., both modified the same file)
+  - paths: 'src/**/*.test.ts'
+    conflict_type: 'both-modified'
+    strategy: 'theirs'

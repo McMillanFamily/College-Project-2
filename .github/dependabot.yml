@@ -1,5 +1,19 @@
 version: 2
 updates:
+<<<<<<< HEAD
+=======
+  - package-ecosystem: "pip"   #This is the package manager i use for python.
+    directory: "/PyhtonFiles/studypilot_web"             #Location for the dependancy files 
+    schhedual: 
+      interval: "weekly"       #Checks for updates once a week 
+      day: "monday"            #opens PRs on Monday Mornings 
+    open-pull-request-limit: 5 #prevents the bot from spamming pull requestes.
+
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
+>>>>>>> 520d19d518136fedeec6509056e17e04bc6d3f27
   - package-ecosystem: "pip"
     directory: "/PythonFiles/studypilot_web"
     schedule:
