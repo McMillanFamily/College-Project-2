@@ -28,8 +28,8 @@ jobs:
       # Using '|| true' allows the workflow to continue to the resolver step if conflicts arise
       - name: Merge testing branch
         run: |
-          git fetch origin testing
-          git merge origin/testing --no-commit --no-ff || echo "Merge conflicts detected. Proceeding to auto-resolution..."
+          git fetch origin Testing
+          git merge origin/Testing --no-commit --no-ff || echo "Merge conflicts detected. Proceeding to auto-resolution..."
 
       # 4. Run the Conflict Resolver Action
       - name: Resolve conflicts
