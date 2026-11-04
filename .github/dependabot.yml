@@ -1,7 +1,7 @@
-#Dependabot this just updates the stuff so it doesnt break any libarys used
-
+# .github/dependabot.yml
 version: 2
 updates:
+<<<<<<< HEAD
   - package-ecosystem: "pip"   #This is the package manager i use for python.
     directory: "/PyhtonFiles/studypilot_web"             #Location for the dependancy files 
     schhedual: 
@@ -13,3 +13,17 @@ updates:
       python-dependencies:
         patterns:
           - "*"
+=======
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    
+    # Corrected grouping syntax
+    groups:
+      python-dependencies:
+        patterns: 
+          - "*"
+>>>>>>> 7e794575eaa8592347210bf730851661ee0d478d
