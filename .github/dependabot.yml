@@ -3,7 +3,7 @@
 version: 2
 updates:
   - package-ecosystem: "pip"   #This is the package manager i use for python.
-    directory: "/"             #Location for the dependancy files 
+    directory: "/PyhtonFiles/studypilot_web"             #Location for the dependancy files 
     schhedual: 
       interval: "weekly"       #Checks for updates once a week 
       day: "monday"            #opens PRs on Monday Mornings 
@@ -12,4 +12,4 @@ updates:
     groups:
       python-dependencies:
         patterns:
-          -"*"
+          - "*"
