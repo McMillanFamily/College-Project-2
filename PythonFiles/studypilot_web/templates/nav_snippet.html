@@ -1,0 +1,11 @@
+{# Put this inside the <nav> in base.html #}
+{% if current_user %}
+  <span>Signed in as {{ current_user.username }}</span>
+  <form method="post" action="{{ url_for('logout') }}" style="display:inline">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <button type="submit">Log out</button>
+  </form>
+{% else %}
+  <a href="{{ url_for('login') }}">Log in</a>
+  <a href="{{ url_for('register') }}">Register</a>
+{% endif %}

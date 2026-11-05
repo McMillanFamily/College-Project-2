@@ -12,7 +12,7 @@ import secrets
 import threading
 from datetime import date
 
-from flask import (Flask, abort, flash, redirect, render_template, request,
+from flask import (Flask, abort, flash, g, redirect, render_template, request,
                    session, url_for)
 
 import logic
@@ -22,6 +22,11 @@ app = Flask(__name__)
 # Set STUDYPILOT_SECRET_KEY in the environment for a fixed key. Without it a
 # random key is made each run (fine for development; sessions reset on restart).
 app.secret_key = os.environ.get("STUDYPILOT_SECRET_KEY") or secrets.token_hex(32)
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    # SESSION_COOKIE_SECURE=True,  # turn on once the site is served over HTTPS
+)
 
 LOCK = threading.Lock()  # stops two requests writing the data file at once
 
@@ -40,6 +45,29 @@ def check_csrf():
         sent = request.form.get("csrf", "")
         if not sent or not secrets.compare_digest(sent, session.get("csrf", "")):
             abort(400)
+
+
+# ---------- Security: everything needs a login except these pages ----------
+
+PUBLIC_ENDPOINTS = {"login", "register", "static"}
+
+
+@app.before_request
+def require_login():
+    """Protect every page by default, so a new route can't be left open by accident."""
+    if request.endpoint is None or request.endpoint in PUBLIC_ENDPOINTS:
+        return None  # (no endpoint = unknown URL, the 404 page handles it)
+    user = logic.get_user(load_data(), session.get("user_id"))
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
+    g.user = user
+    return None
+
+
+def current_store():
+    """The logged-in user's own tasks, notes and timetable."""
+    return logic.user_store(load_data(), g.user["id"])
 
 
 # ---------- Helpers shared by the templates ----------
@@ -63,6 +91,7 @@ def template_helpers():
         "status_of": logic.task_status,
         "STATUS_TEXT": STATUS_TEXT,
         "today_iso": date.today().isoformat(),
+        "current_user": g.get("user"),
     }
 
 
@@ -76,23 +105,75 @@ def date_from_form(value):
 
 
 def change(action, message, endpoint):
-    """Load -> run a logic function -> save -> flash -> redirect (Post/Redirect/Get)."""
+    """Load -> run a logic function on THIS USER'S store -> save -> flash -> redirect."""
     with LOCK:
-        store = load_data()
+        root = load_data()
         try:
-            result = action(store)
-            save_data(store)
+            result = action(logic.user_store(root, g.user["id"]))
+            save_data(root)
             flash(message(result), "success")
         except logic.ValidationError as err:
             flash(str(err), "error")
     return redirect(url_for(endpoint))
 
 
+# ---------- Accounts ----------
+
+def start_session(user):
+    session.clear()  # drop anything from before the login
+    session["user_id"] = user["id"]
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if "user_id" in session:
+        return redirect(url_for("home"))
+    if request.method == "POST":
+        f = request.form
+        with LOCK:
+            root = load_data()
+            try:
+                user = logic.register_user(root, f.get("username", ""),
+                                           f.get("password", ""), f.get("confirm", ""))
+                save_data(root)
+            except logic.ValidationError as err:
+                flash(str(err), "error")
+                return render_template("register.html", username=f.get("username", ""))
+        start_session(user)
+        flash(f"Welcome to StudyPilot, {user['username']}!", "success")
+        return redirect(url_for("home"))
+    return render_template("register.html", username="")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if "user_id" in session:
+        return redirect(url_for("home"))
+    if request.method == "POST":
+        f = request.form
+        try:
+            user = logic.authenticate(load_data(), f.get("username", ""),
+                                      f.get("password", ""))
+        except logic.ValidationError as err:
+            flash(str(err), "error")
+            return render_template("login.html", username=f.get("username", ""))
+        start_session(user)
+        return redirect(url_for("home"))
+    return render_template("login.html", username="")
+
+
+@app.post("/logout")
+def logout():
+    session.clear()
+    flash("You have been logged out.", "success")
+    return redirect(url_for("login"))
+
+
 # ---------- Pages ----------
 
 @app.get("/")
 def home():
-    store = load_data()
+    store = current_store()
     done, total, percent = logic.progress(store)
     return render_template("home.html", groups=logic.reminders(store),
                            done=done, total=total, percent=percent)
@@ -103,7 +184,7 @@ def tasks():
     sort = request.args.get("sort", "deadline")
     if sort not in ("deadline", "priority"):
         sort = "deadline"
-    store = load_data()
+    store = current_store()
     return render_template("tasks.html", tasks=logic.sorted_tasks(store, sort), sort=sort)
 
 
@@ -130,7 +211,7 @@ def delete_task_route(task_id):
 
 @app.get("/timetable")
 def timetable():
-    store = load_data()
+    store = current_store()
     week = [(day, logic.lessons_on(store, day)) for day in logic.DAYS]
     return render_template("timetable.html", week=week)
 
@@ -152,7 +233,7 @@ def delete_lesson_route(lesson_id):
 
 @app.get("/notes")
 def notes():
-    store = load_data()
+    store = current_store()
     return render_template("notes.html", notes=list(reversed(store["notes"])))
 
 
