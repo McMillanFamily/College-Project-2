@@ -1,35 +1,58 @@
 {% extends "base.html" %}
-{% block title %}Home{% endblock %}
+{% block title %}Dashboard{% endblock %}
 {% block content %}
-<h1>Welcome back</h1>
+<header class="topbar">
+    <h1>Dashboard</h1>
+    <p>Your personal student organiser</p>
+</header>
 
-<section aria-labelledby="progress-h" class="progress-block">
-  <h2 id="progress-h">Your progress</h2>
-  <p class="big">{{ percent }}%</p>
-  <div class="track" role="progressbar" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100"
-       aria-label="Tasks completed"><div class="fill" style="width: {{ percent }}%"></div></div>
-  <p>{{ done }} of {{ total }} task{{ '' if total == 1 else 's' }} done.</p>
+<section class="welcome">
+    <h2>Welcome to Study Pilot, {{ current_user.username }}</h2>
+    <p>Add your own information using the pages on the left.</p>
 </section>
 
-<section aria-labelledby="remind-h">
-  <h2 id="remind-h">What needs your attention</h2>
-  {% if not (groups.overdue or groups.today or groups.soon) %}
-    <p>Nothing urgent. <a href="{{ url_for('tasks') }}">Add a task</a> to start planning.</p>
-  {% endif %}
-  {% for key, title in [('overdue', 'Overdue'), ('today', 'Due today'), ('soon', 'Due within ' ~ SOON_DAYS ~ ' days')] %}
-    {% if groups[key] %}
-      <h3 class="group {{ key }}">{{ title }}</h3>
-      <ul class="plain">
-        {% for t in groups[key] %}
-          <li><strong>{{ t.title }}</strong> <span class="meta">{{ fmt_date(t.deadline) }}, {{ PRIORITIES[t.priority] }} priority</span></li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-  {% endfor %}
+<section class="stats" aria-label="Summary">
+    <div class="stat">
+        Homework tasks
+        <strong>{{ total }}</strong>
+    </div>
+    <div class="stat">
+        Assessments
+        <strong>{{ assessment_count }}</strong>
+    </div>
+    <div class="stat">
+        Attendance
+        <strong>{{ attendance_percent ~ '%' if attendance_percent is not none else '—' }}</strong>
+    </div>
 </section>
 
-<p class="actions">
-  <a class="button" href="{{ url_for('tasks') }}">Add a task</a>
-  <a class="button secondary" href="{{ url_for('timetable') }}">View timetable</a>
-</p>
+<div class="grid">
+    <section class="card">
+        <h2>Study Progress</h2>
+        <div class="progress" role="progressbar" aria-label="Homework completed"
+             aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-fill" style="width: {{ percent }}%"></div>
+        </div>
+        <p>{{ done }} of {{ total }} homework tasks completed ({{ percent }}%)</p>
+    </section>
+
+    <section class="card">
+        <h2>Upcoming</h2>
+        {% set urgent = groups.overdue + groups.today + groups.soon %}
+        {% if urgent %}
+        <div class="item-list">
+            {% for task in urgent %}
+            <div class="item">
+                <div class="item-main">
+                    <strong>{{ task.title }}</strong>
+                    <small>{{ STATUS_TEXT[status_of(task)] }} · {{ fmt_date(task.deadline) }}{% if task.subject %} · {{ task.subject }}{% endif %}</small>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty">Nothing overdue or due in the next {{ SOON_DAYS }} days.</p>
+        {% endif %}
+    </section>
+</div>
 {% endblock %}

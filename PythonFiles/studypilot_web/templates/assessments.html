@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Assessments{% endblock %}
+{% block content %}
+<header class="topbar">
+    <h1>My Assessments</h1>
+    <p>Add tests, assignments and grades</p>
+</header>
+
+<section class="card">
+    <h2>Add an assessment</h2>
+    <form method="post" action="{{ url_for('add_assessment_route') }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <div class="form-grid">
+            <div class="field">
+                <label for="name">Assessment name</label>
+                <input id="name" name="name" required maxlength="80" placeholder="Enter assessment name">
+            </div>
+            <div class="field">
+                <label for="subject">Subject (optional)</label>
+                <input id="subject" name="subject" maxlength="40" placeholder="Enter subject">
+            </div>
+            <div class="field">
+                <label for="date">Assessment date</label>
+                <input id="date" type="date" name="date" required>
+            </div>
+            <div class="field">
+                <label for="grade">Grade (optional)</label>
+                <input id="grade" name="grade" maxlength="20" placeholder="Add grade when received">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit">Add assessment</button>
+        </div>
+    </form>
+</section>
+
+<section class="card">
+    <h2>My assessments</h2>
+    <div class="item-list">
+        {% for item in items %}
+        <div class="item">
+            <div class="item-main">
+                <strong>{{ item.name }}</strong>
+                <small>{{ fmt_date(item.date) }}{% if item.subject %} · {{ item.subject }}{% endif %} · {% if item.grade %}Grade: {{ item.grade }}{% else %}No grade yet{% endif %}</small>
+            </div>
+            <div class="item-actions">
+                <form method="post" action="{{ url_for('set_grade_route', assessment_id=item.id) }}" class="inline-form">
+                    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+                    <input name="grade" maxlength="20" value="{{ item.grade }}" placeholder="Grade" aria-label="Grade for {{ item.name }}">
+                    <button type="submit" class="secondary">Save grade</button>
+                </form>
+                <form method="post" action="{{ url_for('delete_assessment_route', assessment_id=item.id) }}">
+                    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+                    <button type="submit" class="danger" aria-label="Delete {{ item.name }}">Delete</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <p class="empty">No assessments yet. Add your first one above.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

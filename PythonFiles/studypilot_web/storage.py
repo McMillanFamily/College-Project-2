@@ -8,7 +8,9 @@ needs to change.
 import json
 import os
 
-from logic import new_store
+import shutil
+
+from logic import new_root
 
 DATA_FILE = os.environ.get(
     "STUDYPILOT_DATA",
@@ -20,15 +22,21 @@ def load_data(path=None):
     """Load saved data. If the file is missing or damaged, start fresh."""
     path = path or DATA_FILE
     if not os.path.exists(path):
-        return new_store()
+        return new_root()
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        for key, default in new_store().items():
+        if not isinstance(data, dict):
+            raise ValueError("data file is not a JSON object")
+        for key, default in new_root().items():
             data.setdefault(key, default)
         return data
-    except (json.JSONDecodeError, OSError, AttributeError):
-        return new_store()
+    except (ValueError, OSError):  # JSONDecodeError is a ValueError
+        try:  # keep the damaged file so the next save cannot overwrite it
+            shutil.copy(path, path + ".bad")
+        except OSError:
+            pass
+        return new_root()
 
 
 def save_data(store, path=None):

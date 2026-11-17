@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Attendance{% endblock %}
+{% block content %}
+<header class="topbar">
+    <h1>My Attendance</h1>
+    <p>Record your own attendance</p>
+</header>
+
+<section class="stats" aria-label="Attendance summary">
+    <div class="stat">
+        Attendance rate
+        <strong>{{ percent ~ '%' if percent is not none else '—' }}</strong>
+    </div>
+    <div class="stat">
+        {{ present }} present out of {{ total }} recorded
+    </div>
+</section>
+
+<section class="card">
+    <h2>Record attendance</h2>
+    <form method="post" action="{{ url_for('add_attendance_route') }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <div class="form-grid">
+            <div class="field">
+                <label for="date">Date</label>
+                <input id="date" type="date" name="date" required max="{{ today_iso }}">
+            </div>
+            <div class="field">
+                <label for="status">Status</label>
+                <select id="status" name="status" required>
+                    <option value="">Choose status</option>
+                    {% for status in ATTENDANCE_STATUSES %}
+                    <option>{{ status }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field full">
+                <label for="note">Note (optional)</label>
+                <input id="note" name="note" maxlength="100" placeholder="Add a note">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit">Save attendance</button>
+        </div>
+    </form>
+</section>
+
+<section class="card">
+    <h2>Attendance history</h2>
+    <div class="item-list">
+        {% for record in records %}
+        <div class="item">
+            <div class="item-main">
+                <strong>{{ fmt_date(record.date) }} · {{ record.status }}</strong>
+                {% if record.note %}<small>{{ record.note }}</small>{% endif %}
+            </div>
+            <div class="item-actions">
+                <form method="post" action="{{ url_for('delete_attendance_route', record_id=record.id) }}">
+                    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+                    <button type="submit" class="danger" aria-label="Delete the record for {{ fmt_date(record.date) }}">Delete</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <p class="empty">Nothing recorded yet.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

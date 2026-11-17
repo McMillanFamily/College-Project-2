@@ -16,6 +16,7 @@ TIME_FORMAT = "%H:%M"
 PRIORITIES = {1: "High", 2: "Medium", 3: "Low"}
 DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 SOON_DAYS = 3  # tasks due within this many days count as "due soon"
+ATTENDANCE_STATUSES = ["Present", "Absent"]
 
 
 # =====================================================================
@@ -44,7 +45,8 @@ def parse_time(text):
 
 def new_store():
     """An empty data store."""
-    return {"tasks": [], "notes": [], "timetable": [], "next_id": 1}
+    return {"tasks": [], "notes": [], "timetable": [],
+            "assessments": [], "attendance": [], "next_id": 1}
 
 
 def _take_id(store):
@@ -55,7 +57,7 @@ def _take_id(store):
 
 # ---------- Tasks ----------
 
-def add_task(store, title, deadline_text, priority, today=None):
+def add_task(store, title, deadline_text, priority, today=None, subject=""):
     """
     ALGORITHM (Stage Three):
       1. Remove spaces from the title.
@@ -76,12 +78,16 @@ def add_task(store, title, deadline_text, priority, today=None):
         raise ValidationError("That deadline is in the past. Please check the date.")
     if priority not in PRIORITIES:
         raise ValidationError("Priority must be 1 (High), 2 (Medium) or 3 (Low).")
+    subject = subject.strip()
+    if len(subject) > 40:
+        raise ValidationError("The subject is too long (40 characters max).")
 
     task = {
         "id": _take_id(store),
         "title": title,
         "deadline": deadline.isoformat(),
         "priority": priority,
+        "subject": subject,
         "done": False,
     }
     store["tasks"].append(task)
@@ -211,6 +217,93 @@ def lessons_on(store, day):
 
 
 
+# ---------- Assessments ----------
+
+def add_assessment(store, name, subject, date_text, grade=""):
+    name, subject, grade = name.strip(), subject.strip(), grade.strip()
+    if not name:
+        raise ValidationError("The assessment name cannot be empty.")
+    if len(name) > 80:
+        raise ValidationError("The assessment name is too long (80 characters max).")
+    if len(subject) > 40:
+        raise ValidationError("The subject is too long (40 characters max).")
+    if len(grade) > 20:
+        raise ValidationError("The grade is too long (20 characters max).")
+    when = parse_date(date_text)  # past dates are allowed: the test may be done
+    item = {"id": _take_id(store), "name": name, "subject": subject,
+            "date": when.isoformat(), "grade": grade}
+    store["assessments"].append(item)
+    return item
+
+
+def find_assessment(store, assessment_id):
+    for item in store["assessments"]:
+        if item["id"] == assessment_id:
+            return item
+    raise ValidationError(f"There is no assessment with ID {assessment_id}.")
+
+
+def set_grade(store, assessment_id, grade):
+    item = find_assessment(store, assessment_id)
+    grade = grade.strip()
+    if len(grade) > 20:
+        raise ValidationError("The grade is too long (20 characters max).")
+    item["grade"] = grade  # an empty grade clears it
+    return item
+
+
+def delete_assessment(store, assessment_id):
+    item = find_assessment(store, assessment_id)
+    store["assessments"].remove(item)
+    return item
+
+
+def sorted_assessments(store):
+    return sorted(store["assessments"], key=lambda a: a["date"])
+
+
+# ---------- Attendance ----------
+
+def add_attendance(store, date_text, status, note="", today=None):
+    today = today or date.today()
+    when = parse_date(date_text)
+    if when > today:
+        raise ValidationError("You cannot record attendance for a future date.")
+    status = status.strip().capitalize()
+    if status not in ATTENDANCE_STATUSES:
+        raise ValidationError("Status must be " + " or ".join(ATTENDANCE_STATUSES) + ".")
+    note = note.strip()
+    if len(note) > 100:
+        raise ValidationError("The note is too long (100 characters max).")
+    if any(r["date"] == when.isoformat() for r in store["attendance"]):
+        raise ValidationError("Attendance is already recorded for that date. "
+                              "Delete it first to change it.")
+    record = {"id": _take_id(store), "date": when.isoformat(),
+              "status": status, "note": note}
+    store["attendance"].append(record)
+    return record
+
+
+def delete_attendance(store, record_id):
+    for record in store["attendance"]:
+        if record["id"] == record_id:
+            store["attendance"].remove(record)
+            return record
+    raise ValidationError(f"There is no attendance record with ID {record_id}.")
+
+
+def sorted_attendance(store):
+    return sorted(store["attendance"], key=lambda r: r["date"], reverse=True)
+
+
+def attendance_summary(store):
+    """Return (present, total, percent). percent is None when nothing is recorded."""
+    total = len(store["attendance"])
+    present = sum(1 for r in store["attendance"] if r["status"] == "Present")
+    percent = round(100 * present / total) if total else None
+    return present, total, percent
+
+
 # =====================================================================
 # USERS
 # =====================================================================
@@ -227,6 +320,11 @@ MAX_PASSWORD = 128
 _DUMMY_HASH = generate_password_hash("not-a-real-password")  # see authenticate()
 
 
+def new_root():
+    """An empty data file: no users yet."""
+    return {"users": [], "next_user_id": 1, "stores": {}}
+
+
 def _ensure_root(root):
     root.setdefault("users", [])
     root.setdefault("next_user_id", 1)
@@ -237,7 +335,10 @@ def _ensure_root(root):
 def user_store(root, user_id):
     """Return (creating if needed) one user's own store."""
     _ensure_root(root)
-    return root["stores"].setdefault(str(user_id), new_store())
+    store = root["stores"].setdefault(str(user_id), new_store())
+    for key, default in new_store().items():  # older saved stores lack newer keys
+        store.setdefault(key, default)
+    return store
 
 
 def get_user(root, user_id):
@@ -262,6 +363,7 @@ def _claim_legacy_data(root):
         return {"tasks": root.pop("tasks", []),
                 "notes": root.pop("notes", []),
                 "timetable": root.pop("timetable", []),
+                "assessments": [], "attendance": [],
                 "next_id": root.pop("next_id", 1)}
     return new_store()
 

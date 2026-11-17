@@ -1,6 +1,20 @@
 {
-  "tasks": [],
-  "notes": [],
-  "timetable": [],
-  "next_id": 2
+  "users": [
+    {
+      "id": 1,
+      "username": "LMcMillan",
+      "password_hash": "scrypt:32768:8:1$40NK9adSZOmLmWZM$fdebd96650c7bac938b063b61845e1e4a93447ae25116f35535868c64fb014db5e84a340f66fbc0ef9616900914cf02491d79261a9279d64ffcad4a1bd2d8623"
+    }
+  ],
+  "next_user_id": 2,
+  "stores": {
+    "1": {
+      "tasks": [],
+      "notes": [],
+      "timetable": [],
+      "assessments": [],
+      "attendance": [],
+      "next_id": 2
+    }
+  }
 }
