@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Pilot | Attendance</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+</head>
+<body>
+<div class="container">
+    <aside class="sidebar">
+        <h2>📚 Study Pilot</h2>
+        <nav>
+            <a href="./Study%20App.html">🏠 Dashboard</a>
+            <a href="Timetable.html">📅 Timetable</a>
+            <a href="./Assessments.html">📝 Assessments</a>
+            <a href="Homework.html">📚 Homework</a>
+            <a href="Attendance.html" class="active">📊 Attendance</a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <h1>My Attendance</h1>
+            <p>Record your own attendance</p>
+        </header>
+
+        <section class="stats">
+            <div class="stat">
+                Attendance rate
+                <strong id="attendance-percent">—</strong>
+            </div>
+
+            <div class="stat">
+                <span id="attendance-count">0 present out of 0 recorded</span>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Record attendance</h2>
+
+            <form id="attendance-form">
+                <div class="form-grid">
+                    <div class="field">
+                        <label>Date</label>
+                        <input type="date" name="date" required>
+                    </div>
+
+                    <div class="field">
+                        <label>Status</label>
+                        <select name="status" required>
+                            <option value="">Choose status</option>
+                            <option>Present</option>
+                            <option>Absent</option>
+                        </select>
+                    </div>
+
+                    <div class="field full">
+                        <label>Note (optional)</label>
+                        <input name="note" placeholder="Add a note">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit">Save attendance</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Attendance history</h2>
+            <div id="attendance-list" class="item-list"></div>
+        </section>
+    </main>
+</div>
+</body>
+</html>
