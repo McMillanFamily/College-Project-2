@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Pilot | Homework</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+</head>
+<body>
+<div class="container">
+    <aside class="sidebar">
+        <h2>📚 Study Pilot</h2>
+        <nav>
+             <a href="./Study%20App.html">🏠 Dashboard</a>
+            <a href="Timetable.html">📅 Timetable</a>
+            <a href="./Assessments.html">📝Assessments</a>
+            <a href="Homework.html" class="active">📚 Homework</a>
+            <a href="Attendance.html">📊 Attendance</a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <h1>My Homework</h1>
+            <p>Add tasks and mark them complete</p>
+        </header>
+
+        <section class="card">
+            <h2>Add homework</h2>
+
+            <form id="homework-form">
+                <div class="form-grid">
+                    <div class="field">
+                        <label>Homework task</label>
+                        <input name="title" required placeholder="What do you need to do?">
+                    </div>
+
+                    <div class="field">
+                        <label>Subject</label>
+                        <input name="subject" placeholder="Enter subject">
+                    </div>
+
+                    <div class="field">
+                        <label>Due date</label>
+                        <input type="date" name="due">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit">Add homework</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>My tasks</h2>
+            <div id="homework-list" class="item-list"></div>
+        </section>
+    </main>
+</div>
+</body>
+</html>
