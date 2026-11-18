@@ -1,60 +1,74 @@
 {% extends "base.html" %}
-{% block title %}Tasks{% endblock %}
+{% block title %}Homework{% endblock %}
 {% block content %}
-<h1>My tasks</h1>
+<header class="topbar">
+    <h1>My Homework</h1>
+    <p>Add tasks and mark them complete</p>
+</header>
 
-<p class="sortbar">Sort by:
-  <a href="{{ url_for('tasks', sort='deadline') }}" {% if sort == 'deadline' %}aria-current="true"{% endif %}>Deadline</a>
-  <a href="{{ url_for('tasks', sort='priority') }}" {% if sort == 'priority' %}aria-current="true"{% endif %}>Priority</a>
-</p>
+<section class="card">
+    <h2>Add homework</h2>
+    <form method="post" action="{{ url_for('add_task_route') }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+        <div class="form-grid">
+            <div class="field">
+                <label for="title">Homework task</label>
+                <input id="title" name="title" required maxlength="80" placeholder="What do you need to do?">
+            </div>
+            <div class="field">
+                <label for="subject">Subject (optional)</label>
+                <input id="subject" name="subject" maxlength="40" placeholder="Enter subject">
+            </div>
+            <div class="field">
+                <label for="deadline">Due date</label>
+                <input id="deadline" type="date" name="deadline" required min="{{ today_iso }}">
+            </div>
+            <div class="field">
+                <label for="priority">Priority</label>
+                <select id="priority" name="priority" required>
+                    {% for value, label in PRIORITIES.items() %}
+                    <option value="{{ value }}"{% if value == 2 %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit">Add homework</button>
+        </div>
+    </form>
+</section>
 
-{% if tasks %}
-<table class="stack">
-  <caption class="sr">Tasks sorted by {{ sort }}</caption>
-  <thead><tr><th scope="col">Task</th><th scope="col">Deadline</th><th scope="col">Priority</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
-  <tbody>
-  {% for t in tasks %}
-    {% set st = status_of(t) %}
-    <tr class="p{{ t.priority }}{{ ' is-done' if t.done }}">
-      <td data-label="Task"><strong>{{ t.title }}</strong></td>
-      <td data-label="Deadline">{{ fmt_date(t.deadline) }}</td>
-      <td data-label="Priority">{{ PRIORITIES[t.priority] }}</td>
-      <td data-label="Status"><span class="chip {{ st }}">{{ STATUS_TEXT[st] }}</span></td>
-      <td data-label="Actions" class="row-actions">
-        {% if not t.done %}
-        <form method="post" action="{{ url_for('complete_task_route', task_id=t.id) }}">
-          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
-          <button class="small" aria-label="Mark {{ t.title }} as done">Mark done</button>
-        </form>
-        {% endif %}
-        <form method="post" action="{{ url_for('delete_task_route', task_id=t.id) }}">
-          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
-          <button class="small danger" aria-label="Delete {{ t.title }}">Delete</button>
-        </form>
-      </td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-{% else %}
-  <p>No tasks yet. Use the form below to add your first one.</p>
-{% endif %}
-
-<h2>Add a task</h2>
-<form method="post" action="{{ url_for('add_task_route') }}" class="form">
-  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
-  <label for="title">Task name</label>
-  <input id="title" name="title" maxlength="80" required>
-
-  <label for="deadline">Deadline</label>
-  <input id="deadline" name="deadline" type="date" min="{{ today_iso }}" required>
-
-  <fieldset>
-    <legend>Priority</legend>
-    {% for value, label in PRIORITIES.items() %}
-      <label class="radio"><input type="radio" name="priority" value="{{ value }}" {% if value == 2 %}checked{% endif %}> {{ label }}</label>
-    {% endfor %}
-  </fieldset>
-  <button>Save task</button>
-</form>
+<section class="card">
+    <h2>My tasks</h2>
+    <p class="sort-links">
+        Sort by:
+        {% if sort == 'deadline' %}<strong>due date</strong>{% else %}<a href="{{ url_for('tasks', sort='deadline') }}">due date</a>{% endif %}
+        |
+        {% if sort == 'priority' %}<strong>priority</strong>{% else %}<a href="{{ url_for('tasks', sort='priority') }}">priority</a>{% endif %}
+    </p>
+    <div class="item-list">
+        {% for task in tasks %}
+        <div class="item">
+            <div class="item-main">
+                <strong>{{ task.title }}</strong>
+                <small>{{ STATUS_TEXT[status_of(task)] }} · Due {{ fmt_date(task.deadline) }} · {{ PRIORITIES[task.priority] }} priority{% if task.subject %} · {{ task.subject }}{% endif %}</small>
+            </div>
+            <div class="item-actions">
+                {% if not task.done %}
+                <form method="post" action="{{ url_for('complete_task_route', task_id=task.id) }}">
+                    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+                    <button type="submit" class="secondary" aria-label="Mark {{ task.title }} as done">Done</button>
+                </form>
+                {% endif %}
+                <form method="post" action="{{ url_for('delete_task_route', task_id=task.id) }}">
+                    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+                    <button type="submit" class="danger" aria-label="Delete {{ task.title }}">Delete</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <p class="empty">No homework yet. Add your first task above.</p>
+        {% endfor %}
+    </div>
+</section>
 {% endblock %}

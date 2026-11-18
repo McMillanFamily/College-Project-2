@@ -80,6 +80,13 @@ STATUS_TEXT = {"done": "Done", "overdue": "Overdue", "today": "Due today",
                "soon": "Due soon", "ok": "To do"}
 
 
+def _session_user():
+    """The logged-in user, even on pages (like 404) that skip require_login."""
+    if "user_id" in session:
+        return logic.get_user(load_data(), session["user_id"])
+    return None
+
+
 @app.context_processor
 def template_helpers():
     return {
@@ -87,11 +94,12 @@ def template_helpers():
         "fmt_date": fmt_date,
         "PRIORITIES": logic.PRIORITIES,
         "DAYS": logic.DAYS,
+        "ATTENDANCE_STATUSES": logic.ATTENDANCE_STATUSES,
         "SOON_DAYS": logic.SOON_DAYS,
         "status_of": logic.task_status,
         "STATUS_TEXT": STATUS_TEXT,
         "today_iso": date.today().isoformat(),
-        "current_user": g.get("user"),
+        "current_user": g.get("user") or _session_user(),
     }
 
 
@@ -175,8 +183,11 @@ def logout():
 def home():
     store = current_store()
     done, total, percent = logic.progress(store)
+    _, _, attendance_percent = logic.attendance_summary(store)
     return render_template("home.html", groups=logic.reminders(store),
-                           done=done, total=total, percent=percent)
+                           done=done, total=total, percent=percent,
+                           assessment_count=len(store["assessments"]),
+                           attendance_percent=attendance_percent)
 
 
 @app.get("/tasks")
@@ -193,7 +204,8 @@ def add_task_route():
     return change(
         lambda s: logic.add_task(s, request.form.get("title", ""),
                                  date_from_form(request.form.get("deadline")),
-                                 request.form.get("priority", type=int, default=0)),
+                                 request.form.get("priority", type=int, default=0),
+                                 subject=request.form.get("subject", "")),
         lambda t: f"Task saved: {t['title']}.", "tasks")
 
 
@@ -213,7 +225,8 @@ def delete_task_route(task_id):
 def timetable():
     store = current_store()
     week = [(day, logic.lessons_on(store, day)) for day in logic.DAYS]
-    return render_template("timetable.html", week=week)
+    return render_template("timetable.html", week=week,
+                           has_lessons=any(lessons for _, lessons in week))
 
 
 @app.post("/timetable/add")
@@ -229,6 +242,55 @@ def add_lesson_route():
 def delete_lesson_route(lesson_id):
     return change(lambda s: logic.delete_lesson(s, lesson_id),
                   lambda l: f"Deleted lesson: {l['name']}.", "timetable")
+
+
+@app.get("/assessments")
+def assessments():
+    return render_template("assessments.html", items=logic.sorted_assessments(current_store()))
+
+
+@app.post("/assessments/add")
+def add_assessment_route():
+    f = request.form
+    return change(
+        lambda s: logic.add_assessment(s, f.get("name", ""), f.get("subject", ""),
+                                       date_from_form(f.get("date")), f.get("grade", "")),
+        lambda a: f"Assessment saved: {a['name']}.", "assessments")
+
+
+@app.post("/assessments/<int:assessment_id>/grade")
+def set_grade_route(assessment_id):
+    return change(lambda s: logic.set_grade(s, assessment_id, request.form.get("grade", "")),
+                  lambda a: f"Grade saved for {a['name']}.", "assessments")
+
+
+@app.post("/assessments/<int:assessment_id>/delete")
+def delete_assessment_route(assessment_id):
+    return change(lambda s: logic.delete_assessment(s, assessment_id),
+                  lambda a: f"Deleted assessment: {a['name']}.", "assessments")
+
+
+@app.get("/attendance")
+def attendance():
+    store = current_store()
+    present, total, percent = logic.attendance_summary(store)
+    return render_template("attendance.html", records=logic.sorted_attendance(store),
+                           present=present, total=total, percent=percent)
+
+
+@app.post("/attendance/add")
+def add_attendance_route():
+    f = request.form
+    return change(
+        lambda s: logic.add_attendance(s, date_from_form(f.get("date")),
+                                       f.get("status", ""), f.get("note", "")),
+        lambda r: f"Attendance saved: {r['status']}.", "attendance")
+
+
+@app.post("/attendance/<int:record_id>/delete")
+def delete_attendance_route(record_id):
+    return change(lambda s: logic.delete_attendance(s, record_id),
+                  lambda r: "Attendance record deleted.", "attendance")
 
 
 @app.get("/notes")

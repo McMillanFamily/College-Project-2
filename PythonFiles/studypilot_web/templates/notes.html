@@ -1,30 +1,44 @@
 {% extends "base.html" %}
 {% block title %}Notes{% endblock %}
 {% block content %}
-<h1>My notes</h1>
+<header class="topbar">
+    <h1>My Notes</h1>
+    <p>Keep useful information together</p>
+</header>
 
-{% if notes %}
-  <ul class="plain notes">
-  {% for n in notes %}
-    <li>
-      <p class="note-text">{{ n.text }}</p>
-      <p class="meta">{{ n.created }}</p>
-      <form method="post" action="{{ url_for('delete_note_route', note_id=n.id) }}">
+<section class="card">
+    <h2>Add a note</h2>
+    <form method="post" action="{{ url_for('add_note_route') }}">
         <input type="hidden" name="csrf" value="{{ csrf_token() }}">
-        <button class="small danger" aria-label="Delete note from {{ n.created }}">Delete</button>
-      </form>
-    </li>
-  {% endfor %}
-  </ul>
-{% else %}
-  <p>No notes yet. Write your first one below.</p>
-{% endif %}
+        <div class="field">
+            <label for="text">Note</label>
+            <textarea id="text" name="text" required placeholder="Write your note here"></textarea>
+        </div>
+        <div class="form-actions">
+            <button type="submit">Save note</button>
+        </div>
+    </form>
+</section>
 
-<h2>Add a note</h2>
-<form method="post" action="{{ url_for('add_note_route') }}" class="form">
-  <input type="hidden" name="csrf" value="{{ csrf_token() }}">
-  <label for="text">Note</label>
-  <textarea id="text" name="text" rows="4" maxlength="1000" required></textarea>
-  <button>Save note</button>
-</form>
+<section class="card">
+    <h2>Saved notes</h2>
+    <div class="item-list">
+        {% for note in notes %}
+        <div class="item">
+            <div class="item-main">
+                <strong>{{ note.text }}</strong>
+                <small>{{ note.created }}</small>
+            </div>
+            <div class="item-actions">
+                <form method="post" action="{{ url_for('delete_note_route', note_id=note.id) }}">
+                    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+                    <button type="submit" class="danger" aria-label="Delete this note">Delete</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <p class="empty">No notes yet.</p>
+        {% endfor %}
+    </div>
+</section>
 {% endblock %}
